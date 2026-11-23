@@ -1,0 +1,411 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - LegalEase{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+        color: white;
+        padding: 2.5rem 0;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 2rem;
+    }
+    .welcome-text h1 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .welcome-text p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+        height: 100%;
+        border-left: 4px solid transparent;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+    .stat-card.total { border-left-color: #4a90d9; }
+    .stat-card.high-risk { border-left-color: #dc3545; }
+    .stat-card.avg-risk { border-left-color: #ffc107; }
+    .stat-card.types { border-left-color: #28a745; }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    .stat-icon.blue { background: linear-gradient(135deg, #4a90d9, #357abd); }
+    .stat-icon.red { background: linear-gradient(135deg, #dc3545, #b02a37); }
+    .stat-icon.yellow { background: linear-gradient(135deg, #ffc107, #d39e00); }
+    .stat-icon.green { background: linear-gradient(135deg, #28a745, #1e7e34); }
+    .stat-card h3 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.3rem;
+        color: #2c3e50;
+    }
+    .stat-card p {
+        color: #6c757d;
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+    .section-title {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .recent-doc {
+        background: white;
+        border-radius: 12px;
+        padding: 1.2rem;
+        margin-bottom: 0.8rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+        border-left: 4px solid #4a90d9;
+    }
+    .recent-doc:hover {
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        transform: translateX(5px);
+    }
+    .recent-doc.risk-high { border-left-color: #dc3545; }
+    .recent-doc.risk-medium { border-left-color: #ffc107; }
+    .recent-doc.risk-low { border-left-color: #28a745; }
+    .doc-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.3rem;
+    }
+    .doc-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .quick-action {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+        border: 2px solid transparent;
+    }
+    .quick-action:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        border-color: #4a90d9;
+        color: inherit;
+    }
+    .quick-action .icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+    .quick-action .icon.blue { background: linear-gradient(135deg, #4a90d9, #357abd); }
+    .quick-action .icon.green { background: linear-gradient(135deg, #28a745, #1e7e34); }
+    .quick-action .icon.purple { background: linear-gradient(135deg, #667eea, #764ba2); }
+    .quick-action .icon.orange { background: linear-gradient(135deg, #fd7e14, #e8590c); }
+    .quick-action h5 {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    .quick-action p {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 15px;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+        height: 100%;
+    }
+    .doc-type-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .doc-type-item:last-child {
+        border-bottom: none;
+    }
+    .doc-type-count {
+        background: #e8f4f8;
+        color: #4a90d9;
+        padding: 0.2rem 0.7rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .time-info {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8 welcome-text">
+                <h1><i class="fas fa-tachometer-alt me-2"></i>Welcome, {{ current_user.username }}!</h1>
+                <p>Here's an overview of your legal document simplification activity</p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{{ url_for('simplify') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus me-2"></i>New Document
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card total">
+                <div class="stat-icon blue">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3>{{ total_docs }}</h3>
+                <p>Total Documents</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card high-risk">
+                <div class="stat-icon red">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3>{{ high_risk_docs }}</h3>
+                <p>High Risk Documents</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card avg-risk">
+                <div class="stat-icon yellow">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>{{ "%.0f"|format(avg_risk * 100) }}%</h3>
+                <p>Average Risk Score</p>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card types">
+                <div class="stat-icon green">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3>{{ doc_types|length }}</h3>
+                <p>Document Types</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h4 class="section-title">
+        <span><i class="fas fa-bolt me-2"></i>Quick Actions</span>
+    </h4>
+    <div class="row g-4 mb-5">
+        <div class="col-md-3 col-sm-6">
+            <a href="{{ url_for('simplify') }}" class="quick-action">
+                <div class="icon blue"><i class="fas fa-magic"></i></div>
+                <h5>Simplify Document</h5>
+                <p>Upload and simplify legal text</p>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="{{ url_for('history') }}" class="quick-action">
+                <div class="icon green"><i class="fas fa-history"></i></div>
+                <h5>View History</h5>
+                <p>Browse all your documents</p>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="{{ url_for('chatbot') }}" class="quick-action">
+                <div class="icon purple"><i class="fas fa-robot"></i></div>
+                <h5>Legal Assistant</h5>
+                <p>Ask legal questions</p>
+            </a>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <a href="#recent" class="quick-action">
+                <div class="icon orange"><i class="fas fa-clock"></i></div>
+                <h5>Recent Activity</h5>
+                <p>View latest simplifications</p>
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Recent Documents -->
+        <div class="col-lg-8" id="recent">
+            <h4 class="section-title">
+                <span><i class="fas fa-clock me-2"></i>Recent Documents</span>
+                <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </h4>
+            
+            {% if documents %}
+                {% for doc in documents[:5] %}
+                <a href="{{ url_for('view_document', doc_id=doc.id) }}" class="text-decoration-none">
+                    <div class="recent-doc 
+                        {% if doc.risk_level == 'High' %}risk-high
+                        {% elif doc.risk_level == 'Medium' %}risk-medium
+                        {% else %}risk-low{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="doc-title">
+                                    <i class="fas fa-file-contract me-2"></i>
+                                    {{ doc.document_type or 'General Document' }}
+                                </div>
+                                <div class="doc-meta">
+                                    {% if doc.filename %}
+                                    <i class="fas fa-paperclip me-1"></i>{{ doc.filename }}
+                                    {% else %}
+                                    <i class="fas fa-paste me-1"></i>Pasted Text
+                                    {% endif %}
+                                    <span class="mx-2">•</span>
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    {{ doc.created_at.strftime('%b %d, %Y') }}
+                                    <i class="fas fa-clock ms-2 me-1"></i>
+                                    {{ doc.created_at.strftime('%I:%M %p') }}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge 
+                                    {% if doc.risk_level == 'Low' %}bg-success
+                                    {% elif doc.risk_level == 'Medium' %}bg-warning text-dark
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ doc.risk_level }}
+                                </span>
+                                <div class="time-info mt-1">
+                                    {{ "%.0f"|format((doc.risk_score or 0) * 100) }}% risk
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-file-contract"></i>
+                    <h5>No Documents Yet</h5>
+                    <p class="text-muted">Start by simplifying your first legal document</p>
+                    <a href="{{ url_for('simplify') }}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus me-1"></i>Simplify Document
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Document Type Distribution -->
+        <div class="col-lg-4">
+            <h4 class="section-title">
+                <span><i class="fas fa-chart-pie me-2"></i>Document Types</span>
+            </h4>
+            <div class="chart-container">
+                {% if doc_types %}
+                    {% for doc_type, count in doc_types.items() %}
+                    <div class="doc-type-item">
+                        <span>
+                            <i class="fas fa-file-alt me-2 text-primary"></i>
+                            {{ doc_type }}
+                        </span>
+                        <span class="doc-type-count">{{ count }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No data available yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Deadlines -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h4 class="section-title">
+                <span><i class="fas fa-bell me-2"></i>Upcoming Deadlines</span>
+                <a href="{{ url_for('deadlines_page') }}" class="btn btn-sm btn-outline-primary">Manage <i class="fas fa-arrow-right ms-1"></i></a>
+            </h4>
+            {% if upcoming_deadlines %}
+            <div class="row g-3">
+                {% for d in upcoming_deadlines %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="recent-doc {% if d.status in ['overdue','urgent'] %}risk-high{% elif d.status == 'soon' %}risk-medium{% else %}risk-low{% endif %} mb-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="doc-title">{{ d.title }}</div>
+                                <div class="doc-meta"><i class="fas fa-calendar-alt me-1"></i>{{ d.due_date }}</div>
+                            </div>
+                            <span class="badge {% if d.status in ['overdue','urgent'] %}bg-danger{% elif d.status == 'soon' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                                {% if d.days_left < 0 %}{{ -d.days_left }}d overdue{% elif d.days_left == 0 %}Today{% else %}{{ d.days_left }}d left{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="chart-container text-center text-muted"><i class="fas fa-calendar-check fa-2x mb-2"></i><p class="mb-0">No upcoming deadlines. Dates found in your documents will appear here.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="chart-container">
+                <h5 class="mb-3"><i class="fas fa-info-circle me-2 text-primary"></i>About LegalEase</h5>
+                <p class="text-muted mb-0">
+                    LegalEase uses advanced Machine Learning and Natural Language Processing techniques to simplify 
+                    complex legal documents into plain, easy-to-understand language. Our system analyzes legal clauses, 
+                    identifies potential risks, and provides recommendations for specialized lawyers when needed.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

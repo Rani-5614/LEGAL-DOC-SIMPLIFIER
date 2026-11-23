@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}LegalEase - Simplify Legal Documents{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Understand Legal Documents <span class="text-primary">Easily</span>
+                </h1>
+                <p class="lead mb-4">
+                    Our AI-powered platform simplifies complex legal jargon into plain, 
+                    easy-to-understand language. Upload any legal document and get instant clarity.
+                </p>
+                <div class="d-flex gap-3 mb-5">
+                    <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-rocket me-2"></i>Get Started Free
+                    </a>
+                    <a href="#features" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-info-circle me-2"></i>Learn More
+                    </a>
+                </div>
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h3 class="text-primary fw-bold">10K+</h3>
+                        <p class="text-muted">Documents Simplified</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-primary fw-bold">95%</h3>
+                        <p class="text-muted">Accuracy Rate</p>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-primary fw-bold">19+</h3>
+                        <p class="text-muted">Languages</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center">
+                    <i class="fas fa-file-contract" style="font-size: 15rem; color: #4a90d9; opacity: 0.8;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<section id="features" class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Key Features</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h4>AI-Powered Simplification</h4>
+                    <p>Advanced machine learning algorithms transform complex legal language into simple, everyday English.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4>Risk Assessment</h4>
+                    <p>Automatically identifies potentially risky clauses and rates documents by risk level.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <h4>Multi-Language Support</h4>
+                    <p>Translate and listen to simplified documents in 19+ languages including Hindi, Tamil, and Telugu.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h4>Lawyer Recommendations</h4>
+                    <p>Get connected with specialized lawyers based on your document type and location.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <h4>Legal Assistant Chatbot</h4>
+                    <p>Ask legal questions and get instant answers from our AI-powered legal assistant.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-volume-up"></i>
+                    </div>
+                    <h4>Text-to-Speech</h4>
+                    <p>Listen to simplified documents in your preferred language for better understanding.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How It Works</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="step-card text-center">
+                    <div class="step-number">1</div>
+                    <i class="fas fa-upload fa-2x mb-3 text-primary"></i>
+                    <h5>Upload Document</h5>
+                    <p>Upload PDF, DOCX, image, or paste text directly</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center">
+                    <div class="step-number">2</div>
+                    <i class="fas fa-cogs fa-2x mb-3 text-primary"></i>
+                    <h5>AI Processing</h5>
+                    <p>Our ML models analyze and simplify the content</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center">
+                    <div class="step-number">3</div>
+                    <i class="fas fa-file-alt fa-2x mb-3 text-primary"></i>
+                    <h5>Get Simplified Text</h5>
+                    <p>Receive plain English version with risk analysis</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-card text-center">
+                    <div class="step-number">4</div>
+                    <i class="fas fa-user-tie fa-2x mb-3 text-primary"></i>
+                    <h5>Connect with Lawyers</h5>
+                    <p>Get recommendations for specialized legal experts</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Understand Your Legal Documents?</h2>
+        <p class="lead mb-4">Join thousands of users who have simplified their legal documents</p>
+        <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-user-plus me-2"></i>Create Free Account
+        </a>
+    </div>
+</section>
+{% endblock %}

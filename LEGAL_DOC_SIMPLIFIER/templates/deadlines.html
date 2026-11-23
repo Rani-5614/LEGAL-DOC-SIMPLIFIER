@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Deadlines & Reminders - LegalEase{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header { background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%); color: white; padding: 2.5rem 0; margin-bottom: 2rem; }
+    .page-header h1, .page-header p { color: white; }
+    .dl-row { display: flex; gap: 1rem; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: .75rem; box-shadow: var(--shadow-sm); }
+    .dl-date { min-width: 84px; text-align: center; border-radius: 10px; padding: .55rem .4rem; background: var(--brand-soft); color: var(--brand-dark); }
+    .dl-date .d { font-size: 1.55rem; font-weight: 800; line-height: 1; } .dl-date .m { font-size: .72rem; text-transform: uppercase; font-weight: 700; }
+    .dl-date.overdue, .dl-date.urgent { background: #fef2f2; color: #b91c1c; }
+    .dl-date.soon { background: #fffbeb; color: #b45309; }
+    .dl-date.undated, .dl-date.past { background: #f1f5f9; color: #475569; }
+    .dl-date.done { background: #f0fdf4; color: #166534; }
+    .dl-ctx { font-size: .85rem; color: var(--muted); }
+    .dl-row.done { opacity: .6; } .dl-row.done .dl-title { text-decoration: line-through; }
+    .filter-pills .btn { border-radius: 99px; }
+    .summary-tile { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.1rem 1.3rem; box-shadow: var(--shadow-sm); }
+    .summary-tile h3 { font-weight: 800; margin: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set overdue = deadlines|selectattr('status', 'equalto', 'overdue')|list|length %}
+{% set urgent = deadlines|selectattr('status', 'equalto', 'urgent')|list|length %}
+{% set soon = deadlines|selectattr('status', 'equalto', 'soon')|list|length %}
+<div class="page-header" style="border-radius: 0 0 30px 30px;">
+    <div class="container d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+            <h1 class="h2 mb-1"><i class="fas fa-bell me-2"></i>Deadlines &amp; Reminders</h1>
+            <p class="mb-0 opacity-75">Expiry dates, renewals, notice periods and due dates found in your documents.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-light" onclick="enableNotifications()"><i class="fas fa-bell me-1"></i>Enable browser alerts</button>
+            <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addDeadlineModal"><i class="fas fa-plus me-1"></i>Add deadline</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="summary-tile"><h3 class="text-danger">{{ overdue }}</h3><small class="text-muted fw-semibold text-uppercase">Overdue</small></div></div>
+        <div class="col-6 col-lg-3"><div class="summary-tile"><h3 style="color:#dc3545">{{ urgent }}</h3><small class="text-muted fw-semibold text-uppercase">Within 7 days</small></div></div>
+        <div class="col-6 col-lg-3"><div class="summary-tile"><h3 style="color:#e0a800">{{ soon }}</h3><small class="text-muted fw-semibold text-uppercase">Within 30 days</small></div></div>
+        <div class="col-6 col-lg-3"><div class="summary-tile"><h3>{{ deadlines|length }}</h3><small class="text-muted fw-semibold text-uppercase">Total tracked</small></div></div>
+    </div>
+
+    <div class="filter-pills d-flex flex-wrap gap-2 mb-3">
+        <button class="btn btn-sm btn-primary" data-filter="all">All</button>
+        <button class="btn btn-sm btn-outline-primary" data-filter="attention">Needs attention</button>
+        <button class="btn btn-sm btn-outline-primary" data-filter="upcoming">Upcoming</button>
+        <button class="btn btn-sm btn-outline-primary" data-filter="undated">No date set</button>
+        <button class="btn btn-sm btn-outline-primary" data-filter="done">Completed</button>
+    </div>
+
+    <div id="dlList">
+    {% for d in deadlines %}
+    {% set st = d.status %}
+    <div class="dl-row {% if d.is_done %}done{% endif %}" data-status="{{ st }}" id="dl-{{ d.id }}">
+        <div class="dl-date {{ st }}">
+            {% if d.due_date %}
+            <div class="d">{{ d.due_date[8:10] }}</div>
+            <div class="m">{{ ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.due_date[5:7]|int] }} {{ d.due_date[0:4] }}</div>
+            {% else %}<div class="d"><i class="fas fa-hourglass-half"></i></div><div class="m">{{ d.period_text or 'No date' }}</div>{% endif %}
+        </div>
+        <div class="flex-grow-1">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <strong class="dl-title">{{ d.title }}</strong>
+                {% if d.period_text and d.due_date %}<span class="badge bg-light text-dark border">{{ d.period_text }}</span>{% endif %}
+                {% if st == 'overdue' %}<span class="badge bg-danger">Overdue by {{ -d.days_left }} day(s)</span>
+                {% elif st == 'urgent' %}<span class="badge bg-danger">{% if d.days_left == 0 %}Due today{% else %}{{ d.days_left }} day(s) left{% endif %}</span>
+                {% elif st == 'soon' %}<span class="badge bg-warning text-dark">{{ d.days_left }} days left</span>
+                {% elif st == 'upcoming' %}<span class="badge bg-primary-subtle text-primary">{{ d.days_left }} days left</span>
+                {% elif st == 'past' %}<span class="badge bg-secondary-subtle text-secondary">Past date</span>
+                        {% elif st == 'undated' %}<span class="badge bg-secondary-subtle text-secondary">Set start/end date</span>
+                {% elif st == 'done' %}<span class="badge bg-success">Done</span>{% endif %}
+                {% if d.remind_on %}<span class="badge bg-success-subtle text-success"><i class="fas fa-bell me-1"></i>Reminder {{ d.remind_on }}</span>{% endif %}
+            </div>
+            {% if d.context %}<div class="dl-ctx">"{{ d.context }}"</div>{% endif %}
+            {% if d.document_id %}<a class="small" href="{{ url_for('view_document', doc_id=d.document_id) }}"><i class="fas fa-file-contract me-1"></i>{{ d.document_name or 'View document' }}</a>{% endif %}
+        </div>
+        <div class="d-flex flex-column gap-1">
+            <button class="btn btn-outline-primary btn-sm" onclick="openReminder({{ d.id }}, '{{ d.due_date or '' }}')"><i class="fas fa-bell me-1"></i>{% if d.due_date %}Reminder{% else %}Set date{% endif %}</button>
+            {% if d.due_date %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('deadline_ics', dl_id=d.id) }}"><i class="fas fa-calendar-plus me-1"></i>Calendar</a>{% endif %}
+            <div class="btn-group">
+                <button class="btn btn-outline-success btn-sm" title="Mark done / undo" onclick="toggleDl({{ d.id }})"><i class="fas fa-check"></i></button>
+                <button class="btn btn-outline-danger btn-sm" title="Delete" onclick="deleteDl({{ d.id }})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5 bg-white rounded-4 border">
+        <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+        <h5>No deadlines yet</h5>
+        <p class="text-muted">Deadlines are detected automatically when you simplify a document, or you can add your own.</p>
+        <a href="{{ url_for('simplify') }}" class="btn btn-primary">Simplify a Document</a>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="reminderModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+    <div class="modal-header"><h5 class="modal-title"><i class="fas fa-bell me-2 text-primary"></i>Set reminder</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="remDlId">
+        <div class="mb-3"><label class="form-label fw-semibold">Deadline / due date</label><input type="date" id="remDueDate" class="form-control"></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Remind me</label>
+            <select id="remDays" class="form-select"><option value="1">1 day before</option><option value="3">3 days before</option><option value="7" selected>7 days before</option><option value="14">14 days before</option><option value="30">30 days before</option><option value="0">On the day</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="saveReminder()">Save reminder</button></div>
+</div></div></div>
+
+<div class="modal fade" id="addDeadlineModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+    <form method="POST" action="{{ url_for('add_deadline') }}">
+        <input type="hidden" name="next" value="{{ url_for('deadlines_page') }}">
+        <div class="modal-header"><h5 class="modal-title">Add deadline</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="mb-3"><label class="form-label fw-semibold">Title</label><input name="title" class="form-control" required placeholder="e.g. Reply to legal notice"></div>
+            <div class="row g-3">
+                <div class="col-6"><label class="form-label fw-semibold">Due date</label><input type="date" name="due_date" class="form-control" required min="{{ today }}"></div>
+                <div class="col-6"><label class="form-label fw-semibold">Remind me</label>
+                    <select name="remind_days_before" class="form-select"><option value="1">1 day before</option><option value="3">3 days before</option><option value="7" selected>7 days before</option><option value="14">14 days before</option><option value="30">30 days before</option></select></div>
+            </div>
+            <div class="mt-3"><label class="form-label fw-semibold">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add</button></div>
+    </form>
+</div></div></div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openReminder(id, due) {
+        document.getElementById('remDlId').value = id;
+        document.getElementById('remDueDate').value = due || '';
+        new bootstrap.Modal(document.getElementById('reminderModal')).show();
+    }
+    function enableNotifications() {
+        if (!('Notification' in window)) { alert('Your browser does not support notifications.'); return; }
+        Notification.requestPermission().then(p => showToast(p === 'granted' ? 'Browser alerts enabled' : 'Notifications were not allowed', p === 'granted' ? 'success' : 'warning'));
+    }
+    function saveReminder() {
+        const id = document.getElementById('remDlId').value;
+        const due = document.getElementById('remDueDate').value;
+        if (!due) { alert('Please choose a due date.'); return; }
+        fetch(`/deadline/${id}/update`, {method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({due_date: due, remind_days_before: document.getElementById('remDays').value})})
+            .then(r => r.json()).then(d => d.success ? location.reload() : alert(d.error || 'Could not save'));
+    }
+    function toggleDl(id) { fetch(`/deadline/${id}/toggle`, {method: 'POST'}).then(() => location.reload()); }
+    function deleteDl(id) {
+        if (confirm('Delete this deadline?')) fetch(`/deadline/${id}/delete`, {method: 'POST'}).then(() => location.reload());
+    }
+    document.querySelectorAll('[data-filter]').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-filter]').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-outline-primary'); });
+        btn.classList.add('btn-primary'); btn.classList.remove('btn-outline-primary');
+        const f = btn.dataset.filter;
+        document.querySelectorAll('#dlList .dl-row').forEach(row => {
+            const s = row.dataset.status;
+            const show = f === 'all' || (f === 'attention' && ['overdue', 'urgent', 'soon'].includes(s)) ||
+                         (f === 'upcoming' && ['upcoming', 'soon', 'urgent'].includes(s)) || (f === 'undated' && s === 'undated') || (f === 'done' && s === 'done');
+            row.style.display = show ? '' : 'none';
+        });
+    }));
+</script>
+{% endblock %}

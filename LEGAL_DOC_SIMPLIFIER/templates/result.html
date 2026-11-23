@@ -1,0 +1,573 @@
+{% extends "base.html" %}
+{% block title %}Simplification Result - LegalEase{% endblock %}
+
+{% block extra_css %}
+<style>
+    .result-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; margin-bottom: 2rem; }
+    .result-header h1 { color: white; }
+    .result-header .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: .72rem; opacity: .75; font-weight: 600; }
+    .type-pill { display: inline-flex; align-items: center; gap: .5rem; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); padding: .4rem .9rem; border-radius: 999px; font-weight: 600; }
+    .conf-bar { width: 90px; height: 6px; background: rgba(255,255,255,.25); border-radius: 99px; overflow: hidden; display: inline-block; vertical-align: middle; }
+    .conf-bar > span { display: block; height: 100%; background: #86efac; }
+
+    .stat-box { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.15rem 1.25rem; box-shadow: var(--shadow-md); height: 100%; }
+    .stat-box h3 { font-weight: 800; margin-bottom: .15rem; font-size: 1.75rem; }
+    .stat-box p { font-size: .82rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+    .risk-low-text { color: var(--success); } .risk-medium-text { color: var(--warning); } .risk-high-text { color: var(--danger); }
+
+    .tool-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem 1.5rem; box-shadow: var(--shadow-sm); }
+    .language-selector { max-width: 220px; }
+
+    /* Risk findings */
+    .risk-summary { border-radius: var(--radius); padding: 1.25rem 1.5rem; border: 1px solid var(--line); background: #fff; }
+    .risk-meter { height: 10px; border-radius: 99px; background: #e2e8f0; overflow: hidden; }
+    .risk-meter > span { display: block; height: 100%; border-radius: 99px; }
+    .finding { border: 1px solid var(--line); border-left: 5px solid var(--sev); border-radius: 12px; background: #fff; padding: 1.15rem 1.35rem; margin-bottom: 1rem; box-shadow: var(--shadow-sm); }
+    .finding .sev-chip { background: var(--sev-bg); color: var(--sev); font-weight: 700; font-size: .72rem; padding: .25rem .6rem; border-radius: 99px; text-transform: uppercase; letter-spacing: .05em; }
+    .finding .excerpt { background: #f8fafc; border-radius: 8px; padding: .7rem .9rem; font-size: .87rem; color: #475569; font-style: italic; border: 1px dashed #cbd5e1; }
+    .finding .suggest { background: var(--sev-bg); border-radius: 8px; padding: .7rem .9rem; font-size: .92rem; }
+    .action-list li { margin-bottom: .45rem; }
+
+    .clause-card { border-left: 4px solid var(--brand); margin-bottom: 1rem; transition: box-shadow .2s; }
+    .clause-card:hover { box-shadow: var(--shadow-md); }
+    .clause-card.liability { border-left-color: #dc3545; } .clause-card.payment { border-left-color: #ffc107; }
+    .clause-card.termination { border-left-color: #f97316; } .clause-card.confidentiality { border-left-color: #7c3aed; }
+    .clause-card.dispute { border-left-color: #0d9488; } .clause-card.intellectual_property { border-left-color: #4a90d9; }
+    .section-card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: .6rem; }
+    .reading { line-height: 1.85; font-size: 1.02rem; color: #1e293b; }
+
+    /* Deadlines */
+    .dl-row { display: flex; gap: 1rem; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: .75rem; box-shadow: var(--shadow-sm); }
+    .dl-date { min-width: 78px; text-align: center; border-radius: 10px; padding: .5rem .4rem; background: var(--brand-soft); color: var(--brand-dark); }
+    .dl-date .d { font-size: 1.5rem; font-weight: 800; line-height: 1; } .dl-date .m { font-size: .72rem; text-transform: uppercase; font-weight: 700; }
+    .dl-date.overdue, .dl-date.urgent { background: #fef2f2; color: #b91c1c; }
+    .dl-date.soon { background: #fffbeb; color: #b45309; }
+    .dl-date.undated, .dl-date.past { background: #f1f5f9; color: #475569; }
+    .dl-date.done { background: #f0fdf4; color: #166534; }
+    .dl-ctx { font-size: .85rem; color: var(--muted); }
+    .dl-row.done { opacity: .6; }
+
+    /* Lawyers */
+    .lawyer-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; height: 100%; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); transition: all .2s; }
+    .lawyer-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); border-color: #bfd2ff; }
+    .lawyer-card .dist { font-weight: 800; color: var(--brand); font-size: 1.1rem; }
+    .lawyer-card .meta { font-size: .88rem; color: #475569; }
+    .lawyer-card .meta i { width: 18px; color: var(--muted); }
+    .spec-match { background: #ecfdf3; color: #166534; } .spec-general { background: #f1f5f9; color: #475569; }
+    .loc-box { background: var(--brand-soft); border: 1px solid #c7d7fe; border-radius: var(--radius); padding: 1.25rem 1.5rem; }
+
+    .download-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow-sm); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set rl = risk_level|lower %}
+<div class="result-header">
+    <div class="container">
+        <div class="eyebrow mb-2">Document Analysis</div>
+        <h1 class="h2 mb-3"><i class="fas fa-file-contract me-2"></i>{{ document_type }}</h1>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+            <span class="type-pill"><i class="fas fa-wand-magic-sparkles"></i> Auto-detected type
+                {% if detection and detection.confidence %}
+                <span class="conf-bar"><span style="width: {{ detection.confidence }}%"></span></span>
+                <small>{{ detection.confidence }}% match</small>
+                {% endif %}
+            </span>
+            {% if filename %}<span class="small opacity-75"><i class="fas fa-paperclip me-1"></i>{{ filename }} ({{ file_type }})</span>{% endif %}
+        </div>
+        {% if detection and detection.alternatives %}
+        <div class="small mt-2 opacity-75">Also resembles:
+            {% for alt in detection.alternatives[:2] %}{{ alt[0] }}{% if not loop.last %}, {% endif %}{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container">
+    <!-- Stats Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3"><div class="stat-box">
+            <h3 class="risk-{{ rl }}-text">{{ risk_level }}</h3><p class="text-muted mb-0">Risk Level</p></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-box">
+            <h3>{{ "%.0f"|format(risk_score * 100) }}%</h3><p class="text-muted mb-0">Risk Score</p></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-box">
+            <h3>{{ risk_analysis.findings|length }}</h3><p class="text-muted mb-0">Risky Clauses Flagged</p></div></div>
+        <div class="col-6 col-lg-3"><div class="stat-box">
+            <h3>{{ deadlines|length }}</h3><p class="text-muted mb-0">Deadlines Found</p></div></div>
+    </div>
+
+    <!-- Audio / Translate -->
+    <div class="tool-card mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-6">
+                <h6 class="mb-2"><i class="fas fa-volume-up me-2 text-primary"></i>Listen to Simplified Document</h6>
+                {% if tts_file %}
+                <audio controls class="w-100" id="audioPlayer">
+                    <source src="{{ url_for('static', filename='audio/' + tts_file) }}" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+                {% else %}
+                <p class="text-muted mb-0 small">Audio not generated yet - choose a language and click Generate Audio.</p>
+                {% endif %}
+            </div>
+            <div class="col-lg-6">
+                <label class="form-label small fw-semibold mb-1">Language for Audio / Translation</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <select class="form-select language-selector" id="languageSelect">
+                        {% for code, name in language_names.items() %}
+                        <option value="{{ code }}" {% if code == 'en' %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary" onclick="generateAudio()"><i class="fas fa-play me-1"></i>Generate Audio</button>
+                    <button class="btn btn-outline-primary" onclick="translateDocument()"><i class="fas fa-language me-1"></i>Translate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Translated Text Display -->
+    <div id="translatedSection" class="card mb-4" style="display: none;">
+        <div class="card-header bg-info"><i class="fas fa-language me-2"></i>Translated Document</div>
+        <div class="card-body"><div id="translatedText" class="reading"></div></div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="resultTabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#simplified">
+            <i class="fas fa-file-alt me-1"></i>Simplified Text</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#risks">
+            <i class="fas fa-shield-halved me-1"></i>Risk Analysis ({{ risk_analysis.findings|length }})</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#deadlines">
+            <i class="fas fa-bell me-1"></i>Deadlines ({{ deadlines|length }})</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#original">
+            <i class="fas fa-file-contract me-1"></i>Original Text</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#clauses">
+            <i class="fas fa-list me-1"></i>Clauses ({{ clauses|length }})</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#sections">
+            <i class="fas fa-gavel me-1"></i>Legal Sections ({{ legal_sections|length }})</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#experts">
+            <i class="fas fa-user-tie me-1"></i>Nearby Legal Offices</button></li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- Simplified Text -->
+        <div class="tab-pane fade show active" id="simplified">
+            <div class="card">
+                <div class="card-header bg-success"><i class="fas fa-check-circle me-2"></i>Simplified Version</div>
+                <div class="card-body"><p class="reading mb-0">{{ simplified_text }}</p></div>
+            </div>
+        </div>
+
+        <!-- Risk Analysis -->
+        <div class="tab-pane fade" id="risks">
+            <div class="row g-4">
+                <div class="col-xl-8">
+                    <div class="risk-summary mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Overall risk: <span class="risk-{{ rl }}-text">{{ risk_level }}</span></strong>
+                            <span class="text-muted small">{{ "%.0f"|format(risk_score * 100) }}% / 100%</span>
+                        </div>
+                        <div class="risk-meter mb-3"><span style="width: {{ "%.0f"|format(risk_score * 100) }}%; background: {% if rl == 'high' %}#dc3545{% elif rl == 'medium' %}#ffc107{% else %}#28a745{% endif %}"></span></div>
+                        <p class="mb-0">{{ risk_analysis.summary }}</p>
+                    </div>
+
+                    {% for f in risk_analysis.findings %}
+                    <div class="finding sev-{{ f.severity_label|lower }}">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h6 class="mb-0 fw-bold">{{ f.label }}</h6>
+                            <span class="sev-chip">{{ f.severity_label }} risk</span>
+                        </div>
+                        <p class="mb-2"><i class="fas fa-circle-info me-1 text-muted"></i><strong>What it means:</strong> {{ f.explanation }}</p>
+                        <div class="excerpt mb-2"><i class="fas fa-quote-left me-1"></i>From your document: {{ f.excerpt }}</div>
+                        <div class="suggest"><i class="fas fa-lightbulb me-1"></i><strong>Suggestion:</strong> {{ f.suggestion }}</div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success border-0"><i class="fas fa-circle-check me-2"></i>No commonly risky clauses were detected. Still read the full document before signing.</div>
+                    {% endfor %}
+                </div>
+                <div class="col-xl-4">
+                    <div class="card position-sticky" style="top: 90px;">
+                        <div class="card-body">
+                            <h6 class="fw-bold"><i class="fas fa-list-check me-2 text-primary"></i>What to do next</h6>
+                            {% if risk_analysis.top_actions %}
+                            <ol class="action-list ps-3 mb-3 small">
+                                {% for a in risk_analysis.top_actions %}<li>{{ a }}</li>{% endfor %}
+                            </ol>
+                            {% else %}
+                            <p class="small text-muted">Review the document carefully and keep a signed copy.</p>
+                            {% endif %}
+                            <a class="btn btn-primary btn-sm w-100" href="#" onclick="document.querySelector('[data-bs-target=\'#experts\']').click(); window.scrollTo({top: 0, behavior: 'smooth'}); return false;">
+                                <i class="fas fa-user-tie me-1"></i>Find a {{ spec_profile.primary }} lawyer near me
+                            </a>
+                            <p class="text-muted small mt-3 mb-0">Automated analysis based on the text of this document. It is not legal advice.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deadlines -->
+        <div class="tab-pane fade" id="deadlines">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                    <h5 class="mb-0">Expiry, renewal &amp; notice deadlines</h5>
+                    <small class="text-muted">Detected from your document. Set a reminder and we will alert you before the date.</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="enableNotifications()"><i class="fas fa-bell me-1"></i>Enable browser alerts</button>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addDeadlineModal"><i class="fas fa-plus me-1"></i>Add deadline</button>
+                </div>
+            </div>
+            {% for d in deadlines %}
+            {% set st = d.status %}
+            <div class="dl-row {% if d.is_done %}done{% endif %}" id="dl-{{ d.id }}">
+                <div class="dl-date {{ st }}">
+                    {% if d.due_date %}
+                    <div class="d">{{ d.due_date[8:10] }}</div>
+                    <div class="m">{{ ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.due_date[5:7]|int] }} {{ d.due_date[0:4] }}</div>
+                    {% else %}
+                    <div class="d"><i class="fas fa-hourglass-half"></i></div>
+                    <div class="m">{{ d.period_text or 'No date' }}</div>
+                    {% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                        <strong>{{ d.title }}</strong>
+                        {% if d.period_text and d.due_date %}<span class="badge bg-light text-dark border">{{ d.period_text }}</span>{% endif %}
+                        {% if d.priority == 'high' %}<span class="badge bg-danger-subtle text-danger">Important</span>{% endif %}
+                        {% if st == 'overdue' %}<span class="badge bg-danger">Overdue by {{ -d.days_left }} day(s)</span>
+                        {% elif st == 'urgent' %}<span class="badge bg-danger">{{ d.days_left }} day(s) left</span>
+                        {% elif st == 'soon' %}<span class="badge bg-warning text-dark">{{ d.days_left }} days left</span>
+                        {% elif st == 'upcoming' %}<span class="badge bg-primary-subtle text-primary">{{ d.days_left }} days left</span>
+                        {% elif st == 'past' %}<span class="badge bg-secondary-subtle text-secondary">Past date</span>
+                        {% elif st == 'undated' %}<span class="badge bg-secondary-subtle text-secondary">Relative period - set the start date</span>{% endif %}
+                        {% if d.remind_on %}<span class="badge bg-success-subtle text-success"><i class="fas fa-bell me-1"></i>Reminder {{ d.remind_on }}</span>{% endif %}
+                    </div>
+                    <div class="dl-ctx">"{{ d.context }}"</div>
+                </div>
+                <div class="d-flex flex-column gap-1">
+                    <button class="btn btn-outline-primary btn-sm" onclick="openReminder({{ d.id }}, '{{ d.due_date or '' }}')"><i class="fas fa-bell me-1"></i>{% if d.due_date %}Set reminder{% else %}Set date{% endif %}</button>
+                    {% if d.due_date %}<a class="btn btn-outline-secondary btn-sm" href="{{ url_for('deadline_ics', dl_id=d.id) }}"><i class="fas fa-calendar-plus me-1"></i>Calendar</a>{% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info border-0"><i class="fas fa-info-circle me-2"></i>No dates or notice periods were detected in this document. You can still add one manually.</div>
+            {% endfor %}
+        </div>
+
+        <!-- Original Text -->
+        <div class="tab-pane fade" id="original">
+            <div class="card">
+                <div class="card-header bg-secondary"><i class="fas fa-file-contract me-2"></i>Original Version</div>
+                <div class="card-body"><p class="reading mb-0" style="max-height: 560px; overflow-y: auto;">{{ original_text }}</p></div>
+            </div>
+        </div>
+
+        <!-- Clauses -->
+        <div class="tab-pane fade" id="clauses">
+            {% if clauses %}
+                {% for clause in clauses %}
+                <div class="card clause-card {{ clause.type }}">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">Clause {{ loop.index }}
+                            <span class="badge bg-secondary-subtle text-secondary">{{ clause.type|replace('_', ' ')|title }}</span></h6>
+                        <div class="row g-3">
+                            <div class="col-lg-6"><h6 class="text-danger"><i class="fas fa-file-contract me-1"></i>Original</h6><p class="small mb-0">{{ clause.original }}</p></div>
+                            <div class="col-lg-6"><h6 class="text-success"><i class="fas fa-check me-1"></i>Simplified</h6><p class="small mb-0">{{ clause.simplified }}</p></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No specific clauses detected in this document.</div>
+            {% endif %}
+        </div>
+
+        <!-- Legal Sections -->
+        <div class="tab-pane fade" id="sections">
+            {% if legal_sections %}
+                {% for section in legal_sections %}
+                <div class="section-card">
+                    <div class="d-flex align-items-center mb-2"><span class="badge bg-primary me-2">{{ section.type }}</span><strong>Section {{ section.number }}</strong></div>
+                    <p class="mb-1">{{ section.description }}</p>
+                    <small class="text-muted">{{ section.context }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>No specific legal sections detected in this document.</div>
+            {% endif %}
+        </div>
+
+        <!-- Nearby Lawyers -->
+        <div class="tab-pane fade" id="experts">
+            <div class="loc-box mb-4">
+                <div class="row align-items-center g-3">
+                    <div class="col-lg-7">
+                        <h5 class="mb-1"><i class="fas fa-location-dot me-2 text-primary"></i>Legal offices near your device location</h5>
+                        <p class="mb-1">For a <strong>{{ document_type }}</strong> we suggest a lawyer in
+                            <strong>{{ spec_profile.primary }}</strong>
+                            {% if spec_profile.related %}<span class="text-muted">(also relevant: {{ spec_profile.related|join(', ') }})</span>{% endif %}.</p>
+                        <div id="yourAddress" class="small mt-2"><i class="fas fa-circle-notch fa-spin me-1"></i>Waiting for your device location...</div>
+                        <small class="text-muted">Your browser will ask permission. Location is used only to search nearby and is not stored.</small>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <select id="radiusSelect" class="form-select" style="max-width: 130px;">
+                                <option value="5">Within 5 km</option><option value="10" selected>Within 10 km</option>
+                                <option value="25">Within 25 km</option><option value="50">Within 50 km</option>
+                            </select>
+                            <button class="btn btn-primary" id="locBtn" onclick="useMyLocation()"><i class="fas fa-crosshairs me-1"></i>Refresh my location</button>
+                        </div>
+                        <div class="input-group mt-2">
+                            <input type="text" id="placeInput" class="form-control" placeholder="...or type an area / city">
+                            <button class="btn btn-outline-primary" onclick="searchPlace()"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="lawyerStatus"></div>
+            <div class="row g-4" id="expertsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Download Section -->
+    <div class="download-card my-4">
+        <div class="row align-items-center g-3">
+            <div class="col-md-7">
+                <h5 class="mb-1"><i class="fas fa-download me-2 text-primary"></i>Download Simplified Document</h5>
+                <p class="text-muted mb-0 small">Save your simplified document and analysis for your records</p>
+            </div>
+            <div class="col-md-5 text-md-end">
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('download_document', doc_id=doc_id, file_format='pdf') }}" class="btn btn-danger"><i class="fas fa-file-pdf me-1"></i>PDF</a>
+                    <a href="{{ url_for('download_document', doc_id=doc_id, file_format='docx') }}" class="btn btn-primary"><i class="fas fa-file-word me-1"></i>DOCX</a>
+                    <a href="{{ url_for('download_document', doc_id=doc_id, file_format='txt') }}" class="btn btn-secondary"><i class="fas fa-file-alt me-1"></i>TXT</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 mb-5 d-flex flex-wrap gap-2">
+        <a href="{{ url_for('simplify') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i>Simplify Another Document</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary"><i class="fas fa-tachometer-alt me-1"></i>Go to Dashboard</a>
+        <a href="{{ url_for('chatbot') }}" class="btn btn-outline-info"><i class="fas fa-robot me-1"></i>Ask Legal Questions</a>
+    </div>
+</div>
+
+<!-- Reminder modal -->
+<div class="modal fade" id="reminderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+        <div class="modal-header"><h5 class="modal-title"><i class="fas fa-bell me-2 text-primary"></i>Set reminder</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="remDlId">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Deadline / due date</label>
+                <input type="date" id="remDueDate" class="form-control">
+                <small class="text-muted">For notice periods, enter the date it ends (start date + period).</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Remind me</label>
+                <select id="remDays" class="form-select">
+                    <option value="1">1 day before</option><option value="3">3 days before</option>
+                    <option value="7" selected>7 days before</option><option value="14">14 days before</option>
+                    <option value="30">30 days before</option><option value="0">On the day</option>
+                </select>
+            </div>
+            <div class="form-check"><input class="form-check-input" type="checkbox" id="remNotify" checked>
+                <label class="form-check-label" for="remNotify">Also allow browser notifications</label></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" onclick="saveReminder()">Save reminder</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Add deadline modal -->
+<div class="modal fade" id="addDeadlineModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow">
+        <form method="POST" action="{{ url_for('add_deadline') }}">
+            <input type="hidden" name="document_id" value="{{ doc_id }}">
+            <input type="hidden" name="next" value="{{ url_for('view_document', doc_id=doc_id) }}">
+            <div class="modal-header"><h5 class="modal-title">Add deadline</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label fw-semibold">Title</label><input name="title" class="form-control" required placeholder="e.g. Renew rental agreement"></div>
+                <div class="row g-3">
+                    <div class="col-6"><label class="form-label fw-semibold">Due date</label><input type="date" name="due_date" class="form-control" required></div>
+                    <div class="col-6"><label class="form-label fw-semibold">Remind me</label>
+                        <select name="remind_days_before" class="form-select"><option value="1">1 day before</option><option value="3">3 days before</option><option value="7" selected>7 days before</option><option value="14">14 days before</option><option value="30">30 days before</option></select></div>
+                </div>
+                <div class="mt-3"><label class="form-label fw-semibold">Notes</label><textarea name="notes" class="form-control" rows="2"></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary">Add</button></div>
+        </form>
+    </div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const docId = {{ doc_id }};
+    let lastCoords = null;
+
+    function generateAudio() {
+        const lang = document.getElementById('languageSelect').value;
+        fetch(`/generate_tts/${docId}/${lang}`).then(r => r.json()).then(data => {
+            if (data.tts_file) {
+                let audioPlayer = document.getElementById('audioPlayer');
+                if (!audioPlayer) {
+                    audioPlayer = document.createElement('audio');
+                    audioPlayer.controls = true; audioPlayer.id = 'audioPlayer'; audioPlayer.className = 'w-100';
+                    document.querySelector('.tool-card .col-lg-6').appendChild(audioPlayer);
+                }
+                audioPlayer.src = `/static/audio/${data.tts_file}`;
+                audioPlayer.play();
+            } else { alert('Error generating audio'); }
+        }).catch(() => alert('Error generating audio'));
+    }
+
+    function translateDocument() {
+        const lang = document.getElementById('languageSelect').value;
+        fetch(`/translate/${docId}/${lang}`).then(r => r.json()).then(data => {
+            if (data.translated_text) {
+                document.getElementById('translatedSection').style.display = 'block';
+                document.getElementById('translatedText').textContent = data.translated_text;
+                document.getElementById('translatedSection').scrollIntoView({behavior: 'smooth'});
+            } else { alert('Error translating document'); }
+        }).catch(() => alert('Error translating document'));
+    }
+
+    /* ---------------- Deadlines & reminders ---------------- */
+    function openReminder(id, due) {
+        document.getElementById('remDlId').value = id;
+        document.getElementById('remDueDate').value = due || '';
+        new bootstrap.Modal(document.getElementById('reminderModal')).show();
+    }
+    function enableNotifications() {
+        if (!('Notification' in window)) { alert('Your browser does not support notifications.'); return; }
+        Notification.requestPermission().then(p => showToast(p === 'granted' ? 'Browser alerts enabled' : 'Notifications were not allowed', p === 'granted' ? 'success' : 'warning'));
+    }
+    function saveReminder() {
+        const id = document.getElementById('remDlId').value;
+        const due = document.getElementById('remDueDate').value;
+        if (!due) { alert('Please choose a due date.'); return; }
+        const body = {due_date: due, remind_days_before: document.getElementById('remDays').value};
+        fetch(`/deadline/${id}/update`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})
+            .then(r => r.json()).then(data => {
+                if (data.success) {
+                    if (document.getElementById('remNotify').checked) enableNotifications();
+                    location.href = location.pathname + '#deadlines'; location.reload();
+                } else { alert(data.error || 'Could not save reminder'); }
+            });
+    }
+    // Re-open the deadlines tab after reload
+    if (location.hash === '#deadlines') {
+        document.addEventListener('DOMContentLoaded', () => document.querySelector('[data-bs-target="#deadlines"]').click());
+    }
+
+    /* ---------------- Location-based lawyers ---------------- */
+    function setStatus(html, type) {
+        document.getElementById('lawyerStatus').innerHTML = html ? `<div class="alert alert-${type || 'info'} border-0">${html}</div>` : '';
+    }
+
+    let locationRequested = false;
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabBtn = document.querySelector('[data-bs-target="#experts"]');
+        if (tabBtn) tabBtn.addEventListener('shown.bs.tab', () => {
+            if (!locationRequested) { locationRequested = true; useMyLocation(); }
+        });
+    });
+
+    function showAddress(html) { const el = document.getElementById('yourAddress'); if (el) el.innerHTML = html; }
+
+    function useMyLocation() {
+        locationRequested = true;
+        if (!navigator.geolocation) { setStatus('Your browser does not support location access. Type your area below instead.', 'warning'); return; }
+        const btn = document.getElementById('locBtn');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" style="width:1rem;height:1rem"></span>Getting location...';
+        setStatus('Please allow location access in your browser prompt...', 'info');
+        navigator.geolocation.getCurrentPosition(pos => {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-crosshairs me-1"></i>Use my current location';
+            lastCoords = {latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy)};
+            showAddress('<i class="fas fa-circle-notch fa-spin me-1"></i>Location found - looking up your address...');
+            loadLawyers();
+        }, err => {
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-crosshairs me-1"></i>Use my current location';
+            const msg = err.code === 1 ? 'Location permission was denied. You can allow it in your browser settings, or type your area below.'
+                      : 'Could not determine your location. Type your area below instead.';
+            setStatus(msg, 'warning');
+            showAddress('<span class="text-danger"><i class="fas fa-triangle-exclamation me-1"></i>Location not shared.</span>');
+        }, {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000});
+    }
+
+    function searchPlace() {
+        const q = document.getElementById('placeInput').value.trim();
+        if (!q) return;
+        setStatus('<span class="spinner-border spinner-border-sm me-2"></span>Finding that place...', 'info');
+        fetch('/geocode_place?q=' + encodeURIComponent(q)).then(r => r.json()).then(d => {
+            if (d.latitude == null) { setStatus('Could not find that place. Try adding the city name.', 'warning'); return; }
+            lastCoords = {latitude: d.latitude, longitude: d.longitude};
+            loadLawyers();
+        }).catch(() => setStatus('Place search failed. Please try again.', 'danger'));
+    }
+
+    function loadLawyers() {
+        if (!lastCoords) return;
+        const radius = document.getElementById('radiusSelect').value;
+        const container = document.getElementById('expertsContainer');
+        container.innerHTML = '';
+        setStatus('<span class="spinner-border spinner-border-sm me-2"></span>Searching for lawyers near you...', 'info');
+        fetch(`/find_lawyers/${docId}`, {method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({...lastCoords, radius_km: radius})})
+            .then(r => r.json()).then(data => {
+                if (data.error) { setStatus(escapeHtml(data.error), 'danger'); return; }
+                renderLawyers(data);
+            }).catch(() => setStatus('Could not load lawyers. Please try again.', 'danger'));
+    }
+
+    function renderLawyers(data) {
+        const container = document.getElementById('expertsContainer');
+        const ul = data.user_location || {};
+        showAddress(`<i class="fas fa-location-dot text-danger me-1"></i><strong>Your location:</strong> ${escapeHtml(ul.address || ul.label || (ul.latitude.toFixed(4) + ', ' + ul.longitude.toFixed(4)))}`
+            + (ul.accuracy_m ? ` <span class="text-muted">(accuracy ~${ul.accuracy_m} m)</span>` : ''));
+        const where = data.user_location.label ? ` near <strong>${escapeHtml(data.user_location.label)}</strong>` : ' near you';
+        if (!data.lawyers.length) {
+            setStatus(data.osm_status === 'unavailable'
+                ? 'Could not reach the lawyer directories from the server (' + escapeHtml((data.source_errors || []).slice(0, 2).join('; ') || 'no response') + '). Check the server\'s internet access, then try again.'
+                : `No lawyer listings were found within ${data.radius_km} km. Try a larger radius.`, 'warning');
+            container.innerHTML = '';
+            return;
+        }
+        setStatus(`Showing <strong>${data.lawyers.length}</strong> legal office(s)/lawyer(s) closest to you${where} for <strong>${escapeHtml(data.required_specialization)}</strong> (search radius ${data.radius_km} km).`
+            + (data.osm_status === 'unavailable' ? ' <em>Live map data was unavailable, showing directory results only.</em>' : ''), 'success');
+        container.innerHTML = data.lawyers.map(l => {
+            const dist = l.distance_km != null ? `${l.distance_km} km` : '-';
+            const specClass = l.specialization_matched ? 'spec-match' : 'spec-general';
+            return `
+            <div class="col-md-6 col-xl-4">
+              <div class="lawyer-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0 pe-2">${escapeHtml(l.name)}</h5>
+                    <div class="dist text-nowrap"><i class="fas fa-route me-1"></i>${dist}</div>
+                </div>
+                <span class="badge ${specClass} align-self-start mb-3">${l.specialization_matched ? '<i class="fas fa-check me-1"></i>' : ''}${escapeHtml(l.specialization)}</span>
+                <div class="meta mb-1"><i class="fas fa-map-marker-alt"></i>${escapeHtml(l.address || 'Address not listed')}</div>
+                ${l.phone ? `<div class="meta mb-1"><i class="fas fa-phone"></i><a href="tel:${encodeURIComponent(l.phone)}">${escapeHtml(l.phone)}</a></div>` : '<div class="meta mb-1"><i class="fas fa-phone"></i><span class="text-muted">Phone not listed</span></div>'}
+                ${l.email ? `<div class="meta mb-1"><i class="fas fa-envelope"></i><a href="mailto:${encodeURIComponent(l.email)}">${escapeHtml(l.email)}</a></div>` : ''}
+                ${l.website ? `<div class="meta mb-1"><i class="fas fa-globe"></i><a href="${escapeHtml(l.website.startsWith('http') ? l.website : 'https://' + l.website)}" target="_blank" rel="noopener">Website</a></div>` : ''}
+                ${l.opening_hours ? `<div class="meta mb-1"><i class="fas fa-clock"></i>${escapeHtml(l.opening_hours)}</div>` : ''}
+                ${l.rating ? `<div class="meta mb-1"><i class="fas fa-star text-warning"></i>${l.rating} &middot; ${l.experience || '-'} yrs experience</div>` : ''}
+                ${l.fee_range ? `<div class="meta mb-1"><i class="fas fa-indian-rupee-sign"></i>${escapeHtml(l.fee_range)}</div>` : ''}
+                <div class="mt-auto pt-3 d-flex flex-wrap gap-2">
+                    ${l.directions_google ? `<a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="${l.directions_google}"><i class="fas fa-diamond-turn-right me-1"></i>Directions</a>` : ''}
+                    ${l.phone ? `<a class="btn btn-outline-primary btn-sm" href="tel:${encodeURIComponent(l.phone)}"><i class="fas fa-phone me-1"></i>Call</a>` : ''}
+                    ${l.directions_osm ? `<a class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener" href="${l.directions_osm}"><i class="fas fa-map me-1"></i>OSM</a>` : ''}
+                </div>
+                <div class="small text-muted mt-2">Source: ${escapeHtml(l.source)}</div>
+              </div>
+            </div>`;
+        }).join('') + `<div class="col-12"><p class="small text-muted mb-0">Listings come from public map data and may be incomplete. Please verify the lawyer's specialization, enrolment and fees before engaging.</p></div>`;
+    }
+</script>
+{% endblock %}

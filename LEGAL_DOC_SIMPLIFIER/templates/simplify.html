@@ -1,0 +1,468 @@
+{% extends "base.html" %}
+{% block title %}Simplify Document - LegalEase{% endblock %}
+
+{% block extra_css %}
+<style>
+    .simplify-header {
+        background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+        color: white;
+        padding: 2.5rem 0;
+        border-radius: 0 0 30px 30px;
+        margin-bottom: 2rem;
+    }
+    .simplify-header h1 {
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    .simplify-header p {
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+    .upload-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+    .upload-area {
+        border: 3px dashed #cbd5e0;
+        border-radius: 15px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: #f8fafc;
+    }
+    .upload-area:hover {
+        border-color: #4a90d9;
+        background: #f0f7ff;
+    }
+    .upload-area.dragover {
+        border-color: #4a90d9;
+        background: #e8f4f8;
+        transform: scale(1.02);
+    }
+    .upload-icon {
+        font-size: 3.5rem;
+        color: #4a90d9;
+        margin-bottom: 1rem;
+    }
+    .upload-area h5 {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    .upload-area p {
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+    .file-types {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .file-types span {
+        background: #e8f4f8;
+        color: #4a90d9;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        margin: 0 0.2rem;
+        font-weight: 500;
+    }
+    .or-divider {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+    }
+    .or-divider::before, .or-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: #e0e0e0;
+    }
+    .or-divider span {
+        padding: 0 1.5rem;
+        color: #6c757d;
+        font-weight: 600;
+        background: white;
+    }
+    .form-label-custom {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    .form-control-custom {
+        border-radius: 12px;
+        border: 2px solid #e8e8e8;
+        padding: 1rem;
+        min-height: 200px;
+        resize: vertical;
+        font-size: 0.95rem;
+    }
+    .form-control-custom:focus {
+        border-color: #4a90d9;
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 217, 0.15);
+    }
+    .btn-simplify {
+        background: linear-gradient(135deg, #4a90d9 0%, #357abd 100%);
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: white;
+        transition: all 0.3s;
+        width: 100%;
+    }
+    .btn-simplify:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(74, 144, 217, 0.4);
+        color: white;
+    }
+    .btn-simplify:disabled {
+        opacity: 0.6;
+        transform: none;
+    }
+    .file-preview {
+        background: #e8f4f8;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+    .file-preview.show {
+        display: block;
+    }
+    .feature-list {
+        list-style: none;
+        padding: 0;
+    }
+    .feature-list li {
+        padding: 0.5rem 0;
+        color: #4a5568;
+        display: flex;
+        align-items: center;
+    }
+    .feature-list li i {
+        color: #28a745;
+        margin-right: 0.8rem;
+    }
+    .info-panel {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        height: 100%;
+    }
+    .info-panel h5 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    .doc-type-badge {
+        display: inline-block;
+        background: #e8f4f8;
+        color: #4a90d9;
+        padding: 0.3rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin: 0.2rem;
+        font-weight: 500;
+    }
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    .loading-overlay.show {
+        display: flex;
+    }
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 5px solid #e8f4f8;
+        border-top: 5px solid #4a90d9;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1.5rem;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .loading-text {
+        color: #2c3e50;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    .loading-subtext {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">
+        <i class="fas fa-magic me-2"></i>Simplifying your document...
+    </div>
+    <div class="loading-subtext">This may take a few moments</div>
+</div>
+
+<div class="simplify-header">
+    <div class="container">
+        <h1><i class="fas fa-magic me-2"></i>Simplify Legal Document</h1>
+        <p>Upload a file or paste text to get a simplified version with risk analysis</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4">
+        <!-- Main Upload Section -->
+        <div class="col-lg-8">
+            <div class="upload-card">
+                <form method="POST" action="{{ url_for('simplify') }}" enctype="multipart/form-data" id="simplifyForm">
+                    <!-- File Upload Area -->
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" id="fileInput" name="file" 
+                               accept=".pdf,.docx,.doc,.txt,.png,.jpg,.jpeg,.gif,.bmp,.tiff" 
+                               style="display: none;">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h5>Drop your file here or click to browse</h5>
+                        <p>Upload any legal document for instant simplification</p>
+                        <div class="file-types">
+                            <span>PDF</span>
+                            <span>DOCX</span>
+                            <span>TXT</span>
+                            <span>PNG</span>
+                            <span>JPG</span>
+                            <span>TIFF</span>
+                        </div>
+                    </div>
+                    
+                    <!-- File Preview -->
+                    <div class="file-preview" id="filePreview">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-file-alt me-2 text-primary"></i>
+                                <strong id="fileName"></strong>
+                                <span class="text-muted ms-2" id="fileSize"></span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Divider -->
+                    <div class="or-divider">
+                        <span>OR</span>
+                    </div>
+                    
+                    <!-- Text Input -->
+                    <div class="mb-4">
+                        <label class="form-label-custom">
+                            <i class="fas fa-paste me-2"></i>Paste Legal Text
+                        </label>
+                        <textarea class="form-control form-control-custom" 
+                                  name="legal_text" id="legalText" 
+                                  placeholder="Paste your legal document text here...&#10;&#10;Example: This Agreement is made and entered into as of the date of execution by and between the parties hereto, and shall be governed by the laws of the jurisdiction wherein the same is executed..."
+                                  rows="10"></textarea>
+                        <div class="d-flex justify-content-between mt-2">
+                            <small class="text-muted" id="charCount">0 characters</small>
+                            <small class="text-muted" id="wordCount">0 words</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-simplify" id="submitBtn">
+                        <i class="fas fa-magic me-2"></i>Simplify Document
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Info Panel -->
+        <div class="col-lg-4">
+            <div class="info-panel">
+                <h5><i class="fas fa-info-circle me-2 text-primary"></i>How It Works</h5>
+                <ul class="feature-list">
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Upload or paste your document</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Our ML model analyzes the text</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Complex legal terms are simplified</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Risk assessment is performed</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span>Get plain English version</span>
+                    </li>
+                </ul>
+                
+                <hr>
+                
+                <h5><i class="fas fa-file-contract me-2 text-primary"></i>Supported Documents</h5>
+                <div>
+                    <span class="doc-type-badge">Contracts</span>
+                    <span class="doc-type-badge">Agreements</span>
+                    <span class="doc-type-badge">Leases</span>
+                    <span class="doc-type-badge">Employment</span>
+                    <span class="doc-type-badge">Property</span>
+                    <span class="doc-type-badge">Financial</span>
+                    <span class="doc-type-badge">Family</span>
+                    <span class="doc-type-badge">Corporate</span>
+                    <span class="doc-type-badge">Legal Notices</span>
+                    <span class="doc-type-badge">IP Documents</span>
+                </div>
+                
+                <hr>
+                
+                <h5><i class="fas fa-shield-alt me-2 text-primary"></i>Privacy & Security</h5>
+                <p class="text-muted small mb-0">
+                    Your documents are processed securely and are not stored permanently. 
+                    We respect your privacy and ensure all data is handled confidentially.
+                </p>
+                
+                <hr>
+                
+                <h5><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Disclaimer</h5>
+                <p class="text-muted small mb-0">
+                    This tool provides simplified information for educational purposes only. 
+                    It does not constitute legal advice. Always consult a qualified lawyer 
+                    for important legal matters.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const legalText = document.getElementById('legalText');
+    const charCount = document.getElementById('charCount');
+    const wordCount = document.getElementById('wordCount');
+    const simplifyForm = document.getElementById('simplifyForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    
+    // Drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.add('dragover');
+        });
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+            uploadArea.classList.remove('dragover');
+        });
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFile(files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+    
+    function handleFile(file) {
+        const allowedTypes = ['pdf', 'docx', 'doc', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'];
+        const ext = file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedTypes.includes(ext)) {
+            alert('File type not supported. Please upload PDF, DOCX, TXT, or image files.');
+            clearFile();
+            return;
+        }
+        
+        if (file.size > 16 * 1024 * 1024) {
+            alert('File is too large. Maximum size is 16MB.');
+            clearFile();
+            return;
+        }
+        
+        fileName.textContent = file.name;
+        fileSize.textContent = `(${(file.size / 1024).toFixed(2)} KB)`;
+        filePreview.classList.add('show');
+        
+        // Clear text input when file is selected
+        legalText.value = '';
+        updateCounts();
+    }
+    
+    function clearFile() {
+        fileInput.value = '';
+        filePreview.classList.remove('show');
+        fileName.textContent = '';
+        fileSize.textContent = '';
+    }
+    
+    // Character and word count
+    function updateCounts() {
+        const text = legalText.value;
+        charCount.textContent = `${text.length} characters`;
+        wordCount.textContent = `${text.trim() ? text.trim().split(/\s+/).length : 0} words`;
+    }
+    
+    legalText.addEventListener('input', updateCounts);
+    
+    // Form submission
+    simplifyForm.addEventListener('submit', (e) => {
+        const hasFile = fileInput.files.length > 0;
+        const hasText = legalText.value.trim().length > 0;
+        
+        if (!hasFile && !hasText) {
+            e.preventDefault();
+            alert('Please upload a file or paste legal text to simplify.');
+            return;
+        }
+        
+        // Show loading overlay
+        loadingOverlay.classList.add('show');
+    });
+</script>
+{% endblock %}
