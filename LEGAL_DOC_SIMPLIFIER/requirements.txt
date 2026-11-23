@@ -13,7 +13,6 @@ python-docx
 Pillow
 pytesseract
 pdf2image
-easyocr
 opencv-python
 reportlab
 google-generativeai
