@@ -16,3 +16,4 @@ pdf2image
 reportlab
 google-generativeai
 gunicorn
+opencv-python-headless
