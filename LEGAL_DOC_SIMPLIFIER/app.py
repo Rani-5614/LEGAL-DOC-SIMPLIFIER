@@ -21,7 +21,6 @@ import docx
 from PIL import Image
 import pytesseract
 import pdf2image
-import easyocr
 import cv2
 import numpy as np
 from googletrans import Translator
@@ -41,6 +40,17 @@ from models import lawyer_finder
 from datetime import date
 import google.generativeai as genai
 
+import os
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
+
+model = None
+def get_model():
+    global model
+    if model is None:
+        model = load_model()
+    return model
 # ============================================================
 # GEMINI AI CONFIGURATION (Used for Chatbot only)
 # ============================================================
